@@ -247,13 +247,11 @@
                 container.innerHTML = '<p style="text-align:center;color:#999;grid-column:1/-1;">目前冰箱還沒有登記副食品庫存喔！</p>';
                 return;
             }
-            const today = new Date();
-            today.setHours(0,0,0,0);
+            const today = new Date(); today.setHours(0,0,0,0);
             inventory.forEach((item, index) => {
                 let currentQty = item.qty + item.manualOffset;
                 if (item.storage === '冷凍') {
-                    const start = new Date(item.startDate);
-                    start.setHours(0,0,0,0);
+                    const start = new Date(item.startDate); start.setHours(0,0,0,0);
                     const diffDays = Math.floor(Math.max(0, today - start) / (1000 * 60 * 60 * 24));
                     currentQty = Math.max(0, item.qty - diffDays + item.manualOffset);
                 } else {
@@ -264,11 +262,15 @@
                 card.className = `inv-item-card ${isLow ? 'low-stock' : ''}`;
                 card.innerHTML = `
                     <h4>${item.storage === '冷凍' ? '❄️' : '👜'} ${item.name}</h4>
-                    <p style="font-size:13px; margin: 5px 0; color:#57606f;">剩餘：${currentQty} 盒 | 最晚補貨：${item.deadline}</p>
-                    <div style="display:flex;gap:5px;">
-                        <button class="inv-btn" onclick="changeQty(${index}, -1)">-1</button>
-                        <button class="inv-btn" onclick="changeQty(${index}, 1)">+1</button>
-                        <button class="inv-btn" onclick="deleteInventory(${index})">刪除</button>
+                    <span class="inv-badge" style="background:${currentQty <= 2 ? 'var(--danger)' : 'var(--primary)'}">${currentQty} 盒</span>
+                    <p style="font-size:13px; margin: 5px 0; color:#57606f;">
+                        進貨日期：${item.startDate}<br>
+                        <strong>最晚補貨：${item.deadline}</strong>
+                    </p>
+                    <div style="margin-top:10px; display:flex; gap:10px;">
+                        <button class="inv-btn" style="background:#dfe4ea; padding:10px 20px; flex:1;" onclick="changeQty(${index}, -1)">-1</button>
+                        <button class="inv-btn" style="background:var(--baby); color:white; padding:10px 20px; flex:1;" onclick="changeQty(${index}, 1)">+1</button>
+                        <button class="inv-btn" style="background:var(--danger); color:white; padding:10px 20px; flex:1;" onclick="deleteInventory(${index})">刪除</button>
                     </div>
                 `;
                 container.appendChild(card);
