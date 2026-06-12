@@ -23,134 +23,17 @@
         .summary-box { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
         .summary-card { background: #f8f9fa; padding: 15px; border-radius: 10px; text-align: center; border-left: 5px solid var(--primary); }
         .date-header { display: flex; justify-content: space-between; align-items: center; background: #dfe4ea; padding: 12px; font-weight: bold; border-radius: 8px; margin-top: 15px; }
+        .trend-arrow { font-size: 18px; font-weight: bold; }
+        .arrow-up { color: var(--danger); }
+        .arrow-down { color: var(--primary); }
+        .arrow-flat { color: #747d8c; }
         ul { list-style: none; padding: 0; margin: 0; }
         li { padding: 12px 10px; border-bottom: 1px solid #f1f2f6; display: flex; justify-content: space-between; align-items: center; }
         .tag { padding: 2px 6px; font-size: 11px; border-radius: 4px; color: white; font-weight: bold; margin-right: 5px; }
         .tag-veg { background: var(--primary); }
         .tag-baby { background: var(--baby); }
-        .del-btn { background: var(--danger); padding: 4px 8px; font-size: 12px; border-radius: 5px; color: white; border: none; cursor: pointer; }
+        .del-btn { background: var(--danger); padding: 4px 8px; font-size: 12px; border-radius: 5px; width: auto; }
         .chart-container { position: relative; height: 250px; width: 100%; }
         .budget-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: bold; }
-        .progress-container { background: #eee; border-radius: 10px; height: 24px; width: 100%; overflow: hidden; position: relative; }
-        .progress-bar { background: var(--primary); height: 100%; width: 0%; transition: width 0.5s ease; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 13px; }
-        .inventory-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 10px; }
-        .inv-item-card { border: 1px solid #dfe4ea; padding: 12px; border-radius: 10px; background: #fcfcfc; position: relative; }
-        .inv-btn { padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; margin: 0 5px; background: #eee; }
-        .radio-group { display: flex; gap: 10px; background: #f1f2f6; padding: 8px 12px; border-radius: 8px; border: 1px solid #ced6e0; height: 46px; align-items: center; }
-    </style>
-</head>
-<body>
-
-    <h1>🍽️ 每日伙食費記事本</h1>
-
-    <div class="card">
-        <div class="budget-header">
-            <span>📅 本月伙食費預算進度條</span>
-            <span>上限：$<input type="number" id="budget-limit" value="8000" style="width: 80px; padding: 4px;" onchange="updateBudgetBar()"></span>
-        </div>
-        <div class="progress-container"><div id="budget-progress-bar" class="progress-bar">0%</div></div>
-    </div>
-
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('veg')">🥬 蔬菜/日常食材</button>
-        <button class="tab-btn" id="baby-tab" onclick="switchTab('baby')">👶 寶寶副食品專區</button>
-    </div>
-
-    <div class="card">
-        <div id="form-veg" class="input-form">
-            <div><label>日期</label><input type="date" id="v-date"></div>
-            <div><label>食材項目</label><input type="text" id="v-item"></div>
-            <div><label>金額</label><input type="number" id="v-price"></div>
-            <div><button onclick="addExpense('veg')">新增支出</button></div>
-        </div>
-        <div id="form-baby" class="input-form baby-theme" style="display: none;">
-            <div><label>進貨日期</label><input type="date" id="b-date"></div>
-            <div><label>品項</label><input type="text" id="b-item"></div>
-            <div><label>總數量</label><input type="number" id="b-qty" value="14"></div>
-            <button onclick="addExpense('baby')">加入庫存</button>
-        </div>
-    </div>
-
-    <div class="card">
-        <h3>📦 寶寶副食品庫存</h3>
-        <div id="inventory-list" class="inventory-grid"></div>
-    </div>
-
-    <div class="card"><h3>📋 支出明細</h3><div id="list-container"></div></div>
-    <div class="card"><h3>📊 年度統計</h3><div class="chart-container"><canvas id="yearlyChart"></canvas></div></div>
-
-    <script>
-        document.getElementById('v-date').valueAsDate = new Date();
-        document.getElementById('b-date').valueAsDate = new Date();
-        
-        let expenses = JSON.parse(localStorage.getItem('smart_home_expenses')) || [];
-        let inventory = JSON.parse(localStorage.getItem('smart_home_inventory')) || [];
-        let yearlyChart = null;
-
-        function switchTab(type) {
-            document.getElementById('form-veg').style.display = type === 'veg' ? 'grid' : 'none';
-            document.getElementById('form-baby').style.display = type === 'baby' ? 'grid' : 'none';
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.innerText.includes(type === 'veg' ? '蔬菜' : '副食品')));
-        }
-
-        function addExpense(type) {
-            if(type === 'veg') {
-                expenses.push({ date: document.getElementById('v-date').value, name: document.getElementById('v-item').value, total: Number(document.getElementById('v-price').value), type: '食材' });
-            } else {
-                inventory.push({ name: document.getElementById('b-item').value, startDate: document.getElementById('b-date').value, qty: Number(document.getElementById('b-qty').value), manualOffset: 0 });
-                localStorage.setItem('smart_home_inventory', JSON.stringify(inventory));
-            }
-            localStorage.setItem('smart_home_expenses', JSON.stringify(expenses));
-            mainRender();
-        }
-
-        function updateQty(index, amount) {
-            inventory[index].manualOffset += amount;
-            localStorage.setItem('smart_home_inventory', JSON.stringify(inventory));
-            mainRender();
-        }
-
-        function renderInventory() {
-            const container = document.getElementById('inventory-list');
-            container.innerHTML = '';
-            const today = new Date(); today.setHours(0,0,0,0);
-            inventory.forEach((item, index) => {
-                const start = new Date(item.startDate); start.setHours(0,0,0,0);
-                const diffDays = Math.floor(Math.max(0, today - start) / (1000 * 60 * 60 * 24));
-                const currentQty = Math.max(0, item.qty - diffDays + item.manualOffset);
-                const card = document.createElement('div');
-                card.className = 'inv-item-card';
-                card.innerHTML = `<h4>${item.name}</h4><p>目前剩餘：${currentQty} 盒</p>
-                    <button class="inv-btn" onclick="updateQty(${index}, -1)">-1</button>
-                    <button class="inv-btn" onclick="updateQty(${index}, 1)">+1</button>
-                    <button class="del-btn" onclick="inventory.splice(${index},1); localStorage.setItem('smart_home_inventory', JSON.stringify(inventory)); mainRender();">刪除</button>`;
-                container.appendChild(card);
-            });
-        }
-
-        function updateBudgetBar() {
-            const limit = Number(document.getElementById('budget-limit').value) || 8000;
-            localStorage.setItem('budget_limit', limit);
-            const total = expenses.reduce((sum, item) => sum + item.total, 0);
-            const percent = Math.min(100, Math.round((total / limit) * 100));
-            const bar = document.getElementById('budget-progress-bar');
-            bar.style.width = percent + '%';
-            bar.innerText = percent + '%';
-        }
-
-        function mainRender() {
-            renderInventory();
-            updateBudgetBar();
-            // 簡化列表呈現
-            const list = document.getElementById('list-container');
-            list.innerHTML = expenses.map((e, i) => `<li>${e.date} - ${e.name}: $${e.total} <button class="del-btn" onclick="expenses.splice(${i},1); localStorage.setItem('smart_home_expenses', JSON.stringify(expenses)); mainRender();">刪</button></li>`).join('');
-            
-            // 圖表更新
-            const ctx = document.getElementById('yearlyChart').getContext('2d');
-            if(yearlyChart) yearlyChart.destroy();
-            yearlyChart = new Chart(ctx, { type: 'bar', data: { labels: ['1-12月'], datasets: [{ label: '總支出', data: [expenses.reduce((s,i)=>s+i.total,0)], backgroundColor: '#2ecc71' }] } });
-        }
-        mainRender();
-    </script>
-</body>
-</html>
+        .progress-container { background: #eee; border-radius: 10px; height: 24px; width: 100%; overflow: hidden; position: relative; box-shadow: inset 0 2px 5px rgba(0,0,0,0.1); }
+        .progress-bar { background: var(--primary); height: 100%; width: 0%; transition: width 0.5s ease; display: flex; align-items
