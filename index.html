@@ -6,7 +6,7 @@
     <title>🍽️ 每日伙食費記事本 👶</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --primary: #2ecc71; --baby: #ff9f43; --danger: #ff7675; --warning: #f1c40f; }
+        :root { --primary: #2ecc71; --baby: #ff9f43; --danger: #ff7675; --warning: #f1c40f; --blue: #3498db; }
         body { font-family: 'Segoe UI', system-ui, sans-serif; max-width: 800px; margin: 20px auto; padding: 15px; background: #f1f2f6; color: #2f3542; }
         h1, h3 { text-align: center; color: #2f3542; }
         .card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
@@ -16,7 +16,7 @@
         .tab-btn.baby-active { background: var(--baby); color: white; }
         .input-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; align-items: end; }
         label { font-size: 13px; font-weight: bold; color: #57606f; display: block; margin-bottom: 5px; }
-        input, button { padding: 12px; font-size: 15px; border: 1px solid #ced6e0; border-radius: 8px; width: 100%; box-sizing: border-box; }
+        input, select, button { padding: 12px; font-size: 15px; border: 1px solid #ced6e0; border-radius: 8px; width: 100%; box-sizing: border-box; }
         button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
         button:hover { opacity: 0.9; }
         .baby-theme button { background: var(--baby); }
@@ -35,17 +35,20 @@
         .del-btn { background: var(--danger); padding: 4px 8px; font-size: 12px; border-radius: 5px; width: auto; }
         .chart-container { position: relative; height: 250px; width: 100%; }
         
-        /* 新功能樣式：進度條與庫存 */
+        /* 預算進度條與庫存樣式 */
         .budget-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: bold; }
         .progress-container { background: #eee; border-radius: 10px; height: 24px; width: 100%; overflow: hidden; position: relative; box-shadow: inset 0 2px 5px rgba(0,0,0,0.1); }
         .progress-bar { background: var(--primary); height: 100%; width: 0%; transition: width 0.5s ease; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 13px; }
         .progress-bar.warning { background: var(--warning); color: #2f3542; }
         .progress-bar.danger { background: var(--danger); }
-        .inventory-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 10px; }
+        .inventory-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 10px; }
         .inv-item-card { border: 1px solid #dfe4ea; padding: 12px; border-radius: 10px; background: #fcfcfc; position: relative; }
         .inv-item-card.low-stock { border-color: var(--warning); background: #fffdf0; }
         .inv-btn { width: auto; padding: 4px 10px; font-size: 14px; margin-left: 5px; display: inline-block; }
-        .inv-badge { position: absolute; top: 12px; right: 12px; padding: 3px 8px; font-size: 12px; border-radius: 20px; font-weight: bold; }
+        .inv-badge { position: absolute; top: 12px; right: 12px; padding: 3px 8px; font-size: 12px; border-radius: 20px; font-weight: bold; color: white; }
+        .correct-box { display: flex; gap: 5px; margin-top: 10px; background: #f1f2f6; padding: 8px; border-radius: 6px; align-items: center; }
+        .correct-box input { padding: 4px 8px; font-size: 13px; width: 60px; }
+        .correct-box button { padding: 4px 10px; font-size: 13px; width: auto; }
     </style>
 </head>
 <body>
@@ -56,7 +59,7 @@
         <div class="budget-header">
             <span>📅 本月伙食費預算進度條</span>
             <span>
-                預算上限：$<input type="number" id="budget-limit" value="15000" style="width: 80px; padding: 4px; display: inline; font-size: 14px;" onchange="updateBudgetBar()">
+                預算上限：$<input type="number" id="budget-limit" value="8000" style="width: 80px; padding: 4px; display: inline; font-size: 14px;" onchange="updateBudgetBar()">
             </span>
         </div>
         <div class="progress-container">
@@ -92,10 +95,16 @@
     <div class="card" style="border-top: 4px solid var(--baby);">
         <h3>📦 寶寶副食品庫存與補貨備忘錄</h3>
         <div class="input-form" style="margin-bottom: 15px; background: #fafafa; padding: 12px; border-radius: 8px;">
-            <div><label>品項/口味</label><input type="text" id="inv-name" placeholder="如：鮭魚粥"></div>
-            <div><label>進貨日期</label><input type="date" id="inv-date"></div>
-            <div><label>進貨數量 (盒/杯)</label><input type="number" id="inv-qty" value="10" min="1"></div>
-            <div><label>最晚補貨日</label><input type="date" id="inv-deadline"></div>
+            <div><label>品項/口味</label><input type="text" id="inv-name" placeholder="如：雞肉泥、鮭魚粥"></div>
+            <div>
+                <label>保存與消耗類型</label>
+                <select id="inv-storage">
+                    <option value="冷凍">❄️ 冷凍庫存 (自動依天數扣除)</option>
+                    <option value="常溫">👜 常溫庫存 (外出機動用，手動扣)</option>
+                </select>
+            </div>
+            <div><label>進貨數量 (盒/包)</label><input type="number" id="inv-qty" value="14" min="1"></div>
+            <div><label>最晚補貨日 (預估吃完日)</label><input type="date" id="inv-deadline"></div>
             <div><button onclick="addInventory()" style="background: var(--baby);">登記進貨庫存</button></div>
         </div>
         <div id="inventory-list" class="inventory-grid"></div>
@@ -131,9 +140,8 @@
     <script>
         document.getElementById('v-date').valueAsDate = new Date();
         document.getElementById('b-date').valueAsDate = new Date();
-        document.getElementById('inv-date').valueAsDate = new Date();
         
-        // 設定預設的最晚補貨日為兩週後
+        // 預設最晚補貨日為兩週後
         const twoWeeksLater = new Date();
         twoWeeksLater.setDate(twoWeeksLater.getDate() + 14);
         document.getElementById('inv-deadline').valueAsDate = twoWeeksLater;
@@ -142,9 +150,8 @@
         let inventory = JSON.parse(localStorage.getItem('smart_home_inventory')) || [];
         let yearlyChart = null;
 
-        // 初始化預算設定
         if(!localStorage.getItem('budget_limit')) {
-            localStorage.setItem('budget_limit', '15000');
+            localStorage.setItem('budget_limit', '8000');
         }
         document.getElementById('budget-limit').value = localStorage.getItem('budget_limit');
 
@@ -203,26 +210,59 @@
             mainRender();
         }
 
-        // 新功能：新增庫存備忘
         function addInventory() {
             const name = document.getElementById('inv-name').value;
-            const date = document.getElementById('inv-date').value;
+            const storage = document.getElementById('inv-storage').value;
             const qty = Number(document.getElementById('inv-qty').value);
             const deadline = document.getElementById('inv-deadline').value;
 
-            if(!name || !date || !deadline || qty <= 0) return alert('請填寫完整庫存資訊喔！');
+            if(!name || !deadline || qty <= 0) return alert('請填寫品項名稱與數量！');
 
-            inventory.push({ name, date, qty, currentQty: qty, deadline });
-            localStorage.setItem('smart_home_inventory', JSON.stringify(inventory));
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            inventory.push({ 
+                name, 
+                storage,
+                startDate: todayStr, 
+                qty, 
+                manualOffset: 0,
+                deadline 
+            });
             
+            localStorage.setItem('smart_home_inventory', JSON.stringify(inventory));
             document.getElementById('inv-name').value = '';
             renderInventory();
         }
 
         function changeQty(index, amount) {
-            inventory[index].currentQty = Math.max(0, inventory[index].currentQty + amount);
+            inventory[index].manualOffset += amount;
             localStorage.setItem('smart_home_inventory', JSON.stringify(inventory));
             renderInventory();
+        }
+
+        // 新功能：直接覆蓋校正當前庫存數
+        function forceCorrectQty(index) {
+            const inputEl = document.getElementById(`correct-input-${index}`);
+            const targetQty = Number(inputEl.value);
+            if(isNaN(targetQty) || targetQty < 0) return alert('請輸入正確的庫存數字喔！');
+
+            // 計算目前系統認定的基礎數值
+            let baseQty = inventory[index].qty;
+            if (inventory[index].storage === '冷凍') {
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                const start = new Date(inventory[index].startDate);
+                start.setHours(0,0,0,0);
+                const diffDays = Math.floor((today - start) / (1000 * 60 * 60 * 24));
+                baseQty = inventory[index].qty - Math.max(0, diffDays);
+            }
+
+            // 調整手動偏移量，讓最終呈現出來的數字剛好等於使用者的期望值
+            inventory[index].manualOffset = targetQty - baseQty;
+            
+            localStorage.setItem('smart_home_inventory', JSON.stringify(inventory));
+            renderInventory();
+            alert('庫存修正成功！');
         }
 
         function deleteInventory(index) {
@@ -240,36 +280,55 @@
                 return;
             }
 
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
             inventory.forEach((item, index) => {
-                const isLow = item.currentQty <= 2;
+                let currentQty = item.qty + item.manualOffset;
+
+                if (item.storage === '冷凍') {
+                    const start = new Date(item.startDate);
+                    start.setHours(0,0,0,0);
+                    const diffDays = Math.floor(Math.max(0, today - start) / (1000 * 60 * 60 * 24));
+                    currentQty = Math.max(0, item.qty - diffDays + item.manualOffset);
+                } else {
+                    currentQty = Math.max(0, item.qty + item.manualOffset);
+                }
+
+                const isLow = currentQty <= 2;
                 const card = document.createElement('div');
                 card.className = `inv-item-card ${isLow ? 'low-stock' : ''}`;
                 
                 let badgeHtml = '';
-                if(item.currentQty === 0) {
-                    badgeHtml = `<span class="inv-badge" style="background:var(--danger);color:white;">已斷糧 ⚠️</span>`;
+                if(currentQty === 0) {
+                    badgeHtml = `<span class="inv-badge" style="background:var(--danger)">已斷糧 ⚠️</span>`;
                 } else if(isLow) {
-                    badgeHtml = `<span class="inv-badge" style="background:var(--warning);color:#2f3542;">快補貨 ⚡</span>`;
+                    badgeHtml = `<span class="inv-badge" style="background:var(--warning); color:#2f3542;">快補貨 ⚡</span>`;
                 } else {
-                    badgeHtml = `<span class="inv-badge" style="background:var(--primary);color:white;">庫存充裕</span>`;
+                    badgeHtml = `<span class="inv-badge" style="background:${item.storage === '冷凍' ? 'var(--blue)' : 'var(--primary)'}">${item.storage}充裕</span>`;
                 }
 
                 card.innerHTML = `
-                    <h4>👶 ${item.name}</h4>
+                    <h4>${item.storage === '冷凍' ? '❄️' : '👜'} ${item.name}</h4>
                     ${badgeHtml}
                     <p style="font-size:13px; margin: 5px 0; color:#57606f;">
-                        進貨：${item.date} (${item.qty}盒)<br>
+                        進貨總數：${item.qty} 盒/包<br>
                         <strong>最晚補貨：<span style="color:var(--danger)">${item.deadline}</span></strong>
                     </p>
                     <div style="margin-top:10px; display:flex; align-items:center; justify-content:space-between;">
                         <div>
-                            <span style="font-size:15px; font-weight:bold;">剩餘：${item.currentQty} 盒</span>
+                            <span style="font-size:15px; font-weight:bold; color:#2f3542;">目前剩餘：${currentQty} 盒</span>
                         </div>
                         <div>
                             <button class="inv-btn" style="background:#dfe4ea; color:#2f3542;" onclick="changeQty(${index}, -1)">-1</button>
                             <button class="inv-btn" style="background:var(--baby);" onclick="changeQty(${index}, 1)">+1</button>
                             <button class="inv-btn" style="background:var(--danger);" onclick="deleteInventory(${index})">刪</button>
                         </div>
+                    </div>
+                    <div class="correct-box">
+                        <span style="font-size:12px; color:#57606f;">📢 實際對庫存剩：</span>
+                        <input type="number" id="correct-input-${index}" value="${currentQty}" min="0">
+                        <button style="background:var(--blue);" onclick="forceCorrectQty(${index})">修改</button>
                     </div>
                 `;
                 container.appendChild(card);
@@ -282,15 +341,13 @@
             mainRender();
         }
 
-        // 新功能：更新每月預算進度條
         function updateBudgetBar() {
-            const limit = Number(document.getElementById('budget-limit').value) || 15000;
+            const limit = Number(document.getElementById('budget-limit').value) || 8000;
             localStorage.setItem('budget_limit', limit.toString());
 
             const currentMonth = new Date().getMonth();
             const currentYear = new Date().getFullYear();
             
-            // 計算當月總花費
             let monthTotal = 0;
             expenses.forEach(item => {
                 const itemDate = new Date(item.date);
@@ -304,7 +361,6 @@
             bar.style.width = percent + '%';
             bar.innerText = `${percent}% ($${monthTotal} / $${limit})`;
 
-            // 根據進度條危險度變色
             bar.className = 'progress-bar';
             const statusEl = document.getElementById('budget-status-text');
             if(percent >= 90) {
@@ -470,7 +526,6 @@
             }
         }
 
-        // 首次載入執行
         mainRender();
         renderInventory();
     </script>
