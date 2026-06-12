@@ -35,7 +35,7 @@
         .del-btn { background: var(--danger); padding: 4px 8px; font-size: 12px; border-radius: 5px; width: auto; }
         .chart-container { position: relative; height: 250px; width: 100%; }
         
-        /* 預算進度條與庫存樣式 */
+        /* 預算與庫存樣式 */
         .budget-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: bold; }
         .progress-container { background: #eee; border-radius: 10px; height: 24px; width: 100%; overflow: hidden; position: relative; box-shadow: inset 0 2px 5px rgba(0,0,0,0.1); }
         .progress-bar { background: var(--primary); height: 100%; width: 0%; transition: width 0.5s ease; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 13px; }
@@ -49,6 +49,20 @@
         .correct-box { display: flex; gap: 5px; margin-top: 10px; background: #f1f2f6; padding: 8px; border-radius: 6px; align-items: center; }
         .correct-box input { padding: 4px 8px; font-size: 13px; width: 60px; }
         .correct-box button { padding: 4px 10px; font-size: 13px; width: auto; }
+        .radio-group { display: flex; gap: 10px; background: #f1f2f6; padding: 8px 12px; border-radius: 8px; border: 1px solid #ced6e0; height: 46px; align-items: center; box-sizing: border-box; }
+        .radio-group label { display: flex; align-items: center; gap: 4px; margin: 0; font-size: 14px; font-weight: normal; cursor: pointer; color: #2f3542; }
+        .radio-group input { width: auto; margin: 0; cursor: pointer; }
+
+        /* 📅 主婦專用月曆樣式 */
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
+        .calendar-day-name { font-weight: bold; background: #dfe4ea; padding: 5px; border-radius: 5px; font-size: 13px; }
+        .calendar-cell { background: #fafafa; border: 1px solid #eee; border-radius: 8px; min-height: 75px; padding: 4px; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; position: relative; }
+        .calendar-cell.today { background: #fffae6; border: 2px solid var(--warning); }
+        .calendar-cell .day-num { font-weight: bold; font-size: 12px; color: #747d8c; text-align: left; margin-bottom: 3px; }
+        .calendar-event { font-size: 10px; padding: 2px 4px; border-radius: 4px; color: white; margin-bottom: 2px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: bold; }
+        .event-in { background: var(--primary); }
+        .event-out { background: var(--danger); }
     </style>
 </head>
 <body>
@@ -83,31 +97,34 @@
         </div>
 
         <div id="form-baby" class="input-form baby-theme" style="display: none;">
-            <div><label>日期</label><input type="date" id="b-date"></div>
+            <div><label>進貨日期</label><input type="date" id="b-date"></div>
             <div><label>廠商名稱</label><input type="text" id="b-brand" placeholder="如：瀚克寶寶、大地之愛"></div>
-            <div><label>品項名稱</label><input type="text" id="b-item" placeholder="如：鮭魚粥、牛肉泥"></div>
+            <div><label>品項 / 口味</label><input type="text" id="b-item" placeholder="如：鮭魚粥、牛肉泥"></div>
+            <div><label>進貨數量 (盒/包)</label><input type="number" id="b-qty" value="14" min="1"></div>
             <div><label>單價</label><input type="number" id="b-price" placeholder="金額"></div>
-            <div><label>包數 / 盒數</label><input type="number" id="b-qty" value="1" min="1"></div>
-            <div><button onclick="addExpense('baby')">確認加入</button></div>
+            <div>
+                <label>保存與消耗類型</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="b-storage" value="冷凍" checked> ❄️ 冷凍</label>
+                    <label><input type="radio" name="b-storage" value="常溫"> 👜 常溫</label>
+                </div>
+            </div>
+            <div style="grid-column: span 1;"><button onclick="addExpense('baby')">確認加入並登記庫存</button></div>
         </div>
     </div>
 
     <div class="card" style="border-top: 4px solid var(--baby);">
         <h3>📦 寶寶副食品庫存與補貨備忘錄</h3>
-        <div class="input-form" style="margin-bottom: 15px; background: #fafafa; padding: 12px; border-radius: 8px;">
-            <div><label>品項/口味</label><input type="text" id="inv-name" placeholder="如：雞肉泥、鮭魚粥"></div>
-            <div>
-                <label>保存與消耗類型</label>
-                <select id="inv-storage">
-                    <option value="冷凍">❄️ 冷凍庫存 (自動依天數扣除)</option>
-                    <option value="常溫">👜 常溫庫存 (外出機動用，手動扣)</option>
-                </select>
-            </div>
-            <div><label>進貨數量 (盒/包)</label><input type="number" id="inv-qty" value="14" min="1"></div>
-            <div><label>最晚補貨日 (預估吃完日)</label><input type="date" id="inv-deadline"></div>
-            <div><button onclick="addInventory()" style="background: var(--baby);">登記進貨庫存</button></div>
-        </div>
         <div id="inventory-list" class="inventory-grid"></div>
+    </div>
+
+    <div class="card" style="border-top: 4px solid var(--blue);">
+        <div class="calendar-header">
+            <button onclick="changeMonth(-1)" style="width:auto; padding:5px 15px; background:var(--blue);">&lt; 上個月</button>
+            <h3 id="calendar-title" style="margin:0;">2026 年 06 月</h3>
+            <button onclick="changeMonth(1)" style="width:auto; padding:5px 15px; background:var(--blue);">下個月 &gt;</button>
+        </div>
+        <div class="calendar-grid" id="calendar-body"></div>
     </div>
 
     <div class="card">
@@ -141,14 +158,12 @@
         document.getElementById('v-date').valueAsDate = new Date();
         document.getElementById('b-date').valueAsDate = new Date();
         
-        // 預設最晚補貨日為兩週後
-        const twoWeeksLater = new Date();
-        twoWeeksLater.setDate(twoWeeksLater.getDate() + 14);
-        document.getElementById('inv-deadline').valueAsDate = twoWeeksLater;
-
         let expenses = JSON.parse(localStorage.getItem('smart_home_expenses')) || [];
         let inventory = JSON.parse(localStorage.getItem('smart_home_inventory')) || [];
         let yearlyChart = null;
+
+        // 月曆當前顯示的年月
+        let currentCalDate = new Date();
 
         if(!localStorage.getItem('budget_limit')) {
             localStorage.setItem('budget_limit', '8000');
@@ -189,64 +204,59 @@
                 document.getElementById('v-item').value = '';
                 document.getElementById('v-price').value = '';
                 document.getElementById('v-qty').value = '1';
+                
+                expenses.push(data);
             } else {
                 const date = document.getElementById('b-date').value;
                 const brand = document.getElementById('b-brand').value;
                 const item = document.getElementById('b-item').value;
-                const price = Number(document.getElementById('b-price').value);
                 const qty = Number(document.getElementById('b-qty').value);
+                const price = Number(document.getElementById('b-price').value);
+                const storage = document.querySelector('input[name="b-storage"]:checked').value;
 
-                if (!date || !brand || !item || !price) return alert('請填寫完整寶寶副食品資訊！');
-                data = { date, type: '寶寶副食品', name: `[${brand}] ${item}`, price, qty, total: price * qty };
+                if (!date || !brand || !item || !price || qty <= 0) return alert('請填寫完整寶寶副食品資訊！');
+                
+                const fullName = `[${brand}] ${item}`;
+                data = { date, type: '寶寶副食品', name: fullName, price, qty, total: price * qty };
 
+                // 根據進貨數量自動推算最晚補貨日（一天吃一包）
+                const calcDeadline = new Date(date);
+                calcDeadline.setDate(calcDeadline.getDate() + qty);
+                const deadlineStr = calcDeadline.toISOString().split('T')[0];
+
+                inventory.push({ 
+                    name: fullName, 
+                    storage,
+                    startDate: date, 
+                    qty, 
+                    manualOffset: 0,
+                    deadline: deadlineStr 
+                });
+                
                 document.getElementById('b-brand').value = '';
                 document.getElementById('b-item').value = '';
                 document.getElementById('b-price').value = '';
-                document.getElementById('b-qty').value = '1';
+                document.getElementById('b-qty').value = '14';
+
+                expenses.push(data);
+                localStorage.setItem('smart_home_inventory', JSON.stringify(inventory));
             }
 
-            expenses.push(data);
             localStorage.setItem('smart_home_expenses', JSON.stringify(expenses));
             mainRender();
-        }
-
-        function addInventory() {
-            const name = document.getElementById('inv-name').value;
-            const storage = document.getElementById('inv-storage').value;
-            const qty = Number(document.getElementById('inv-qty').value);
-            const deadline = document.getElementById('inv-deadline').value;
-
-            if(!name || !deadline || qty <= 0) return alert('請填寫品項名稱與數量！');
-
-            const todayStr = new Date().toISOString().split('T')[0];
-
-            inventory.push({ 
-                name, 
-                storage,
-                startDate: todayStr, 
-                qty, 
-                manualOffset: 0,
-                deadline 
-            });
-            
-            localStorage.setItem('smart_home_inventory', JSON.stringify(inventory));
-            document.getElementById('inv-name').value = '';
-            renderInventory();
         }
 
         function changeQty(index, amount) {
             inventory[index].manualOffset += amount;
             localStorage.setItem('smart_home_inventory', JSON.stringify(inventory));
-            renderInventory();
+            mainRender();
         }
 
-        // 新功能：直接覆蓋校正當前庫存數
         function forceCorrectQty(index) {
             const inputEl = document.getElementById(`correct-input-${index}`);
             const targetQty = Number(inputEl.value);
             if(isNaN(targetQty) || targetQty < 0) return alert('請輸入正確的庫存數字喔！');
 
-            // 計算目前系統認定的基礎數值
             let baseQty = inventory[index].qty;
             if (inventory[index].storage === '冷凍') {
                 const today = new Date();
@@ -257,18 +267,16 @@
                 baseQty = inventory[index].qty - Math.max(0, diffDays);
             }
 
-            // 調整手動偏移量，讓最終呈現出來的數字剛好等於使用者的期望值
             inventory[index].manualOffset = targetQty - baseQty;
-            
             localStorage.setItem('smart_home_inventory', JSON.stringify(inventory));
-            renderInventory();
+            mainRender();
             alert('庫存修正成功！');
         }
 
         function deleteInventory(index) {
             inventory.splice(index, 1);
             localStorage.setItem('smart_home_inventory', JSON.stringify(inventory));
-            renderInventory();
+            mainRender();
         }
 
         function renderInventory() {
@@ -276,7 +284,7 @@
             container.innerHTML = '';
 
             if(inventory.length === 0) {
-                container.innerHTML = '<p style="text-align:center;color:#999;grid-column:1/-1;">目前冰箱還沒有登記副食品庫存喔！</p>';
+                container.innerHTML = '<p style="text-align:center;color:#999;grid-column:1/-1;">目前冰箱還沒有登記副食品庫存喔！有購買副食品時，在上方專區填寫即可自動加入此處。</p>';
                 return;
             }
 
@@ -312,6 +320,7 @@
                     <h4>${item.storage === '冷凍' ? '❄️' : '👜'} ${item.name}</h4>
                     ${badgeHtml}
                     <p style="font-size:13px; margin: 5px 0; color:#57606f;">
+                        進貨日期：${item.startDate}<br>
                         進貨總數：${item.qty} 盒/包<br>
                         <strong>最晚補貨：<span style="color:var(--danger)">${item.deadline}</span></strong>
                     </p>
@@ -333,6 +342,75 @@
                 `;
                 container.appendChild(card);
             });
+        }
+
+        // 📅 繪製主婦進出貨功能月曆
+        function renderCalendar() {
+            const body = document.getElementById('calendar-body');
+            body.innerHTML = '';
+
+            const year = currentCalDate.getFullYear();
+            const month = currentCalDate.getMonth();
+
+            document.getElementById('calendar-title').innerText = `${year} 年 ${String(month + 1).padStart(2, '0')} 月`;
+
+            // 星期稱號列
+            const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+            weekDays.forEach(d => {
+                const el = document.createElement('div');
+                el.className = 'calendar-day-name';
+                el.innerText = d;
+                body.appendChild(el);
+            });
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+
+            // 塞入空白格子
+            for (let i = 0; i < firstDayIndex; i++) {
+                const blank = document.createElement('div');
+                blank.className = 'calendar-cell';
+                blank.style.background = '#f1f2f6';
+                body.appendChild(blank);
+            }
+
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            // 塞入日期格子
+            for (let day = 1; day <= totalDays; day++) {
+                const cell = document.createElement('div');
+                cell.className = 'calendar-cell';
+
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                if(dateStr === todayStr) cell.classList.add('today');
+
+                cell.innerHTML = `<div class="day-num">${day}</div>`;
+
+                // 檢查這一天有沒有進貨事件或補貨事件
+                inventory.forEach(item => {
+                    if(item.startDate === dateStr) {
+                        const ev = document.createElement('div');
+                        ev.className = 'calendar-event event-in';
+                        ev.innerText = `🟢 進貨:${item.name.split('] ')[1] || item.name}`;
+                        ev.title = `進貨項目: ${item.name} (${item.qty}盒)`;
+                        cell.appendChild(ev);
+                    }
+                    if(item.deadline === dateStr) {
+                        const ev = document.createElement('div');
+                        ev.className = 'calendar-event event-out';
+                        ev.innerText = `🚨 補貨:${item.name.split('] ')[1] || item.name}`;
+                        ev.title = `警告：${item.name} 預計今天吃完，該補貨囉！`;
+                        cell.appendChild(ev);
+                    }
+                });
+
+                body.appendChild(cell);
+            }
+        }
+
+        function changeMonth(dir) {
+            currentCalDate.setMonth(currentCalDate.getMonth() + dir);
+            renderCalendar();
         }
 
         function deleteExpense(index) {
@@ -379,6 +457,8 @@
             calculateVegAnalysis();
             updateYearlyChart();
             updateBudgetBar();
+            renderInventory();
+            renderCalendar();
         }
 
         function renderListAndTrends() {
@@ -527,7 +607,6 @@
         }
 
         mainRender();
-        renderInventory();
     </script>
 </body>
 </html>
