@@ -23,33 +23,20 @@
         .summary-box { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
         .summary-card { background: #f8f9fa; padding: 15px; border-radius: 10px; text-align: center; border-left: 5px solid var(--primary); }
         .date-header { display: flex; justify-content: space-between; align-items: center; background: #dfe4ea; padding: 12px; font-weight: bold; border-radius: 8px; margin-top: 15px; }
-        .trend-arrow { font-size: 18px; font-weight: bold; }
-        .arrow-up { color: var(--danger); }
-        .arrow-down { color: var(--primary); }
-        .arrow-flat { color: #747d8c; }
         ul { list-style: none; padding: 0; margin: 0; }
         li { padding: 12px 10px; border-bottom: 1px solid #f1f2f6; display: flex; justify-content: space-between; align-items: center; }
         .tag { padding: 2px 6px; font-size: 11px; border-radius: 4px; color: white; font-weight: bold; margin-right: 5px; }
         .tag-veg { background: var(--primary); }
         .tag-baby { background: var(--baby); }
-        .del-btn { background: var(--danger); padding: 4px 8px; font-size: 12px; border-radius: 5px; width: auto; }
+        .del-btn { background: var(--danger); padding: 4px 8px; font-size: 12px; border-radius: 5px; color: white; border: none; cursor: pointer; }
         .chart-container { position: relative; height: 250px; width: 100%; }
         .budget-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: bold; }
-        .progress-container { background: #eee; border-radius: 10px; height: 24px; width: 100%; overflow: hidden; position: relative; box-shadow: inset 0 2px 5px rgba(0,0,0,0.1); }
+        .progress-container { background: #eee; border-radius: 10px; height: 24px; width: 100%; overflow: hidden; position: relative; }
         .progress-bar { background: var(--primary); height: 100%; width: 0%; transition: width 0.5s ease; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 13px; }
-        .progress-bar.warning { background: var(--warning); color: #2f3542; }
-        .progress-bar.danger { background: var(--danger); }
         .inventory-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 10px; }
         .inv-item-card { border: 1px solid #dfe4ea; padding: 12px; border-radius: 10px; background: #fcfcfc; position: relative; }
-        .inv-item-card.low-stock { border-color: var(--warning); background: #fffdf0; }
-        .inv-btn { width: auto; padding: 4px 10px; font-size: 14px; margin-left: 5px; display: inline-block; }
-        .inv-badge { position: absolute; top: 12px; right: 12px; padding: 3px 8px; font-size: 12px; border-radius: 20px; font-weight: bold; color: white; }
-        .correct-box { display: flex; gap: 5px; margin-top: 10px; background: #f1f2f6; padding: 8px; border-radius: 6px; align-items: center; }
-        .correct-box input { padding: 4px 8px; font-size: 13px; width: 60px; }
-        .correct-box button { padding: 4px 10px; font-size: 13px; width: auto; }
-        .radio-group { display: flex; gap: 10px; background: #f1f2f6; padding: 8px 12px; border-radius: 8px; border: 1px solid #ced6e0; height: 46px; align-items: center; box-sizing: border-box; }
-        .radio-group label { display: flex; align-items: center; gap: 4px; margin: 0; font-size: 14px; font-weight: normal; cursor: pointer; color: #2f3542; }
-        .radio-group input { width: auto; margin: 0; cursor: pointer; }
+        .inv-btn { padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; margin: 0 5px; background: #eee; }
+        .radio-group { display: flex; gap: 10px; background: #f1f2f6; padding: 8px 12px; border-radius: 8px; border: 1px solid #ced6e0; height: 46px; align-items: center; }
     </style>
 </head>
 <body>
@@ -59,14 +46,9 @@
     <div class="card">
         <div class="budget-header">
             <span>📅 本月伙食費預算進度條</span>
-            <span>
-                預算上限：$<input type="number" id="budget-limit" value="8000" style="width: 80px; padding: 4px; display: inline; font-size: 14px;" onchange="updateBudgetBar()">
-            </span>
+            <span>上限：$<input type="number" id="budget-limit" value="8000" style="width: 80px; padding: 4px;" onchange="updateBudgetBar()"></span>
         </div>
-        <div class="progress-container">
-            <div id="budget-progress-bar" class="progress-bar">0%</div>
-        </div>
-        <p id="budget-status-text" style="text-align: center; margin-top: 8px; font-size: 14px; font-weight: bold; color: #57606f;"></p>
+        <div class="progress-container"><div id="budget-progress-bar" class="progress-bar">0%</div></div>
     </div>
 
     <div class="tabs">
@@ -77,60 +59,25 @@
     <div class="card">
         <div id="form-veg" class="input-form">
             <div><label>日期</label><input type="date" id="v-date"></div>
-            <div><label>食材項目</label><input type="text" id="v-item" placeholder="如：高麗菜、雞蛋"></div>
-            <div><label>單價</label><input type="text" id="v-price" placeholder="數字即可"></div>
-            <div><label>數量 / 份數</label><input type="number" id="v-qty" value="1" min="1"></div>
-            <div><button onclick="addExpense('veg')">新增食材支出</button></div>
+            <div><label>食材項目</label><input type="text" id="v-item"></div>
+            <div><label>金額</label><input type="number" id="v-price"></div>
+            <div><button onclick="addExpense('veg')">新增支出</button></div>
         </div>
-
         <div id="form-baby" class="input-form baby-theme" style="display: none;">
             <div><label>進貨日期</label><input type="date" id="b-date"></div>
-            <div><label>廠商名稱</label><input type="text" id="b-brand" placeholder="瀚克寶寶"></div>
-            <div><label>品項 / 口味</label><input type="text" id="b-item" placeholder="鮭魚粥"></div>
-            <div><label>進貨數量 (盒/包)</label><input type="number" id="b-qty" value="14" min="1"></div>
-            <div><label>單價</label><input type="text" id="b-price" placeholder="數字即可"></div>
-            <div>
-                <label>保存與消耗類型</label>
-                <div class="radio-group">
-                    <label><input type="radio" name="b-storage" value="冷凍" checked> ❄️ 冷凍</label>
-                    <label><input type="radio" name="b-storage" value="常溫"> 👜 常溫</label>
-                </div>
-            </div>
-            <div style="grid-column: span 1;"><button onclick="addExpense('baby')">確認加入並登記庫存</button></div>
+            <div><label>品項</label><input type="text" id="b-item"></div>
+            <div><label>總數量</label><input type="number" id="b-qty" value="14"></div>
+            <button onclick="addExpense('baby')">加入庫存</button>
         </div>
     </div>
 
-    <div class="card" style="border-top: 4px solid var(--baby);">
-        <h3>📦 寶寶副食品庫存與補貨備忘錄</h3>
+    <div class="card">
+        <h3>📦 寶寶副食品庫存</h3>
         <div id="inventory-list" class="inventory-grid"></div>
     </div>
 
-    <div class="card">
-        <h3>🥬 本週 vs 上週 伙食費波動分析</h3>
-        <div class="summary-box">
-            <div class="summary-card" style="border-left-color: var(--primary);">
-                <div>本週食材總支出</div>
-                <h2 id="veg-this-week">$0</h2>
-            </div>
-            <div class="summary-card" style="border-left-color: #747d8c;">
-                <div>上週食材總支出</div>
-                <h2 id="veg-last-week">$0</h2>
-            </div>
-        </div>
-        <p id="veg-analysis-text" style="text-align: center; font-weight: bold; margin-top: 10px; color: #57606f;"></p>
-    </div>
-
-    <div class="card">
-        <h3>📅 全年度每月開銷統計趨勢 (包含副食品)</h3>
-        <div class="chart-container">
-            <canvas id="yearlyChart"></canvas>
-        </div>
-    </div>
-
-    <div class="card">
-        <h3>📋 伙食費支出明細 (含每日升降趨勢)</h3>
-        <div id="list-container"></div>
-    </div>
+    <div class="card"><h3>📋 支出明細</h3><div id="list-container"></div></div>
+    <div class="card"><h3>📊 年度統計</h3><div class="chart-container"><canvas id="yearlyChart"></canvas></div></div>
 
     <script>
         document.getElementById('v-date').valueAsDate = new Date();
@@ -140,102 +87,25 @@
         let inventory = JSON.parse(localStorage.getItem('smart_home_inventory')) || [];
         let yearlyChart = null;
 
-        if(!localStorage.getItem('budget_limit')) {
-            localStorage.setItem('budget_limit', '8000');
-        }
-        document.getElementById('budget-limit').value = localStorage.getItem('budget_limit');
-
         function switchTab(type) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active', 'baby-active'));
-            if(type === 'veg') {
-                document.getElementById('form-veg').style.display = 'grid';
-                document.getElementById('form-baby').style.display = 'none';
-                event.target.classList.add('active');
-            } else {
-                document.getElementById('form-veg').style.display = 'none';
-                document.getElementById('form-baby').style.display = 'grid';
-                document.getElementById('baby-tab').classList.add('baby-active');
-            }
-        }
-
-        function getWeekNumber(d) {
-            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-            var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-            return Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
-        }
-
-        function cleanPriceInput(val) {
-            let cleanVal = val.replace(/[^\d.]/g, '');
-            return Number(cleanVal) || 0;
+            document.getElementById('form-veg').style.display = type === 'veg' ? 'grid' : 'none';
+            document.getElementById('form-baby').style.display = type === 'baby' ? 'grid' : 'none';
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.innerText.includes(type === 'veg' ? '蔬菜' : '副食品')));
         }
 
         function addExpense(type) {
-            let data = {};
-            if (type === 'veg') {
-                const date = document.getElementById('v-date').value;
-                const item = document.getElementById('v-item').value;
-                const rawPrice = document.getElementById('v-price').value;
-                const price = cleanPriceInput(rawPrice);
-                const qty = Number(document.getElementById('v-qty').value);
-                if (!date || !item || price <= 0) return alert('請填寫完整正確的食材資訊與金額！');
-                data = { date, type: '食材', name: item, price, qty, total: price * qty };
-                document.getElementById('v-item').value = '';
-                document.getElementById('v-price').value = '';
-                document.getElementById('v-qty').value = '1';
-                expenses.push(data);
+            if(type === 'veg') {
+                expenses.push({ date: document.getElementById('v-date').value, name: document.getElementById('v-item').value, total: Number(document.getElementById('v-price').value), type: '食材' });
             } else {
-                const date = document.getElementById('b-date').value;
-                const brand = document.getElementById('b-brand').value || '未知品牌';
-                const item = document.getElementById('b-item').value || '未命名品項';
-                const qty = Number(document.getElementById('b-qty').value);
-                const rawPrice = document.getElementById('b-price').value;
-                const price = cleanPriceInput(rawPrice);
-                const storage = document.querySelector('input[name="b-storage"]:checked').value;
-                if (!date || price <= 0 || qty <= 0) return alert('請確認有填寫進貨日期與正確的單價喔！');
-                const fullName = `[${brand}] ${item}`;
-                data = { date, type: '寶寶副食品', name: fullName, price, qty, total: price * qty };
-                const calcDeadline = new Date(date);
-                calcDeadline.setDate(calcDeadline.getDate() + qty);
-                const deadlineStr = calcDeadline.toISOString().split('T')[0];
-                inventory.push({ name: fullName, storage, startDate: date, qty, manualOffset: 0, deadline: deadlineStr });
-                document.getElementById('b-brand').value = '';
-                document.getElementById('b-item').value = '';
-                document.getElementById('b-price').value = '';
-                document.getElementById('b-qty').value = '14';
-                expenses.push(data);
+                inventory.push({ name: document.getElementById('b-item').value, startDate: document.getElementById('b-date').value, qty: Number(document.getElementById('b-qty').value), manualOffset: 0 });
                 localStorage.setItem('smart_home_inventory', JSON.stringify(inventory));
             }
             localStorage.setItem('smart_home_expenses', JSON.stringify(expenses));
             mainRender();
         }
 
-        function changeQty(index, amount) {
+        function updateQty(index, amount) {
             inventory[index].manualOffset += amount;
-            localStorage.setItem('smart_home_inventory', JSON.stringify(inventory));
-            mainRender();
-        }
-
-        function forceCorrectQty(index) {
-            const inputEl = document.getElementById(`correct-input-${index}`);
-            const targetQty = Number(inputEl.value);
-            if(isNaN(targetQty) || targetQty < 0) return alert('請輸入正確的庫存數字喔！');
-            let baseQty = inventory[index].qty;
-            if (inventory[index].storage === '冷凍') {
-                const today = new Date();
-                today.setHours(0,0,0,0);
-                const start = new Date(inventory[index].startDate);
-                start.setHours(0,0,0,0);
-                const diffDays = Math.floor((today - start) / (1000 * 60 * 60 * 24));
-                baseQty = inventory[index].qty - Math.max(0, diffDays);
-            }
-            inventory[index].manualOffset = targetQty - baseQty;
-            localStorage.setItem('smart_home_inventory', JSON.stringify(inventory));
-            mainRender();
-        }
-
-        function deleteInventory(index) {
-            inventory.splice(index, 1);
             localStorage.setItem('smart_home_inventory', JSON.stringify(inventory));
             mainRender();
         }
@@ -243,91 +113,43 @@
         function renderInventory() {
             const container = document.getElementById('inventory-list');
             container.innerHTML = '';
-            if(inventory.length === 0) {
-                container.innerHTML = '<p style="text-align:center;color:#999;grid-column:1/-1;">目前冰箱還沒有登記副食品庫存喔！</p>';
-                return;
-            }
-            const today = new Date();
-            today.setHours(0,0,0,0);
+            const today = new Date(); today.setHours(0,0,0,0);
             inventory.forEach((item, index) => {
-                let currentQty = item.qty + item.manualOffset;
-                if (item.storage === '冷凍') {
-                    const start = new Date(item.startDate);
-                    start.setHours(0,0,0,0);
-                    const diffDays = Math.floor(Math.max(0, today - start) / (1000 * 60 * 60 * 24));
-                    currentQty = Math.max(0, item.qty - diffDays + item.manualOffset);
-                } else {
-                    currentQty = Math.max(0, item.qty + item.manualOffset);
-                }
-                const isLow = currentQty <= 2;
+                const start = new Date(item.startDate); start.setHours(0,0,0,0);
+                const diffDays = Math.floor(Math.max(0, today - start) / (1000 * 60 * 60 * 24));
+                const currentQty = Math.max(0, item.qty - diffDays + item.manualOffset);
                 const card = document.createElement('div');
-                card.className = `inv-item-card ${isLow ? 'low-stock' : ''}`;
-                card.innerHTML = `
-                    <h4>${item.storage === '冷凍' ? '❄️' : '👜'} ${item.name}</h4>
-                    <p style="font-size:13px; margin: 5px 0; color:#57606f;">剩餘：${currentQty} 盒 | 最晚補貨：${item.deadline}</p>
-                    <div style="display:flex;gap:5px;">
-                        <button class="inv-btn" onclick="changeQty(${index}, -1)">-1</button>
-                        <button class="inv-btn" onclick="changeQty(${index}, 1)">+1</button>
-                        <button class="inv-btn" onclick="deleteInventory(${index})">刪除</button>
-                    </div>
-                `;
+                card.className = 'inv-item-card';
+                card.innerHTML = `<h4>${item.name}</h4><p>目前剩餘：${currentQty} 盒</p>
+                    <button class="inv-btn" onclick="updateQty(${index}, -1)">-1</button>
+                    <button class="inv-btn" onclick="updateQty(${index}, 1)">+1</button>
+                    <button class="del-btn" onclick="inventory.splice(${index},1); localStorage.setItem('smart_home_inventory', JSON.stringify(inventory)); mainRender();">刪除</button>`;
                 container.appendChild(card);
             });
         }
 
-        function deleteExpense(index) {
-            expenses.splice(index, 1);
-            localStorage.setItem('smart_home_expenses', JSON.stringify(expenses));
-            mainRender();
-        }
-
         function updateBudgetBar() {
             const limit = Number(document.getElementById('budget-limit').value) || 8000;
-            localStorage.setItem('budget_limit', limit.toString());
-            const currentMonth = new Date().getMonth();
-            const currentYear = new Date().getFullYear();
-            let monthTotal = 0;
-            expenses.forEach(item => {
-                const itemDate = new Date(item.date);
-                if(itemDate.getMonth() === currentMonth && itemDate.getFullYear() === currentYear) monthTotal += item.total;
-            });
-            const percent = Math.min(100, Math.round((monthTotal / limit) * 100)) || 0;
+            localStorage.setItem('budget_limit', limit);
+            const total = expenses.reduce((sum, item) => sum + item.total, 0);
+            const percent = Math.min(100, Math.round((total / limit) * 100));
             const bar = document.getElementById('budget-progress-bar');
             bar.style.width = percent + '%';
-            bar.innerText = `${percent}% ($${monthTotal} / $${limit})`;
+            bar.innerText = percent + '%';
         }
 
         function mainRender() {
-            renderListAndTrends();
-            calculateVegAnalysis();
-            updateYearlyChart();
-            updateBudgetBar();
             renderInventory();
-        }
-
-        function renderListAndTrends() {
-            const container = document.getElementById('list-container');
-            container.innerHTML = '';
-            expenses.sort((a,b) => new Date(b.date) - new Date(a.date));
-            expenses.forEach((item, index) => {
-                const li = document.createElement('li');
-                li.innerHTML = `<div>${item.date} - ${item.name}</div><div>$${item.total} <button class="del-btn" onclick="deleteExpense(${index})">刪</button></div>`;
-                container.appendChild(li);
-            });
-        }
-
-        function calculateVegAnalysis() {
-            // 簡易版分析
-        }
-
-        function updateYearlyChart() {
-            const monthlyTotals = Array(12).fill(0);
-            expenses.forEach(item => { monthlyTotals[new Date(item.date).getMonth()] += item.total; });
+            updateBudgetBar();
+            // 簡化列表呈現
+            const list = document.getElementById('list-container');
+            list.innerHTML = expenses.map((e, i) => `<li>${e.date} - ${e.name}: $${e.total} <button class="del-btn" onclick="expenses.splice(${i},1); localStorage.setItem('smart_home_expenses', JSON.stringify(expenses)); mainRender();">刪</button></li>`).join('');
+            
+            // 圖表更新
             const ctx = document.getElementById('yearlyChart').getContext('2d');
-            if(yearlyChart) { yearlyChart.data.datasets[0].data = monthlyTotals; yearlyChart.update(); }
-            else { yearlyChart = new Chart(ctx, { type: 'bar', data: { labels: ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'], datasets: [{ label: '月支出', data: monthlyTotals, backgroundColor: '#2ecc71' }] } }); }
+            if(yearlyChart) yearlyChart.destroy();
+            yearlyChart = new Chart(ctx, { type: 'bar', data: { labels: ['1-12月'], datasets: [{ label: '總支出', data: [expenses.reduce((s,i)=>s+i.total,0)], backgroundColor: '#2ecc71' }] } });
         }
-
         mainRender();
     </script>
 </body>
