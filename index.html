@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>🍽️ 每日伙食與副食品管理</title>
+    <title>🍽️ 每日伙食費記事本</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #2ecc71; --baby: #ff9f43; --danger: #ff7675; }
@@ -32,15 +32,19 @@
     <div id="calendar" class="calendar-grid"></div>
 </div>
 
+<div class="card">
+    <h3>📋 伙食費支出明細</h3>
+    <div id="list-container"></div>
+</div>
+
 <script>
     let inventory = JSON.parse(localStorage.getItem('baby_inv')) || [
         { name: "幼寶粥", remain: 10 },
         { name: "中寶粥", remain: 15 }
     ];
 
+    // 精算函數：每週5盒，補貨日會隨 remain 變動
     function calculateDueDate(remain) {
-        // 邏輯：每週吃 5 盒，剩餘盒數 / 5 = 週數
-        // 加上今天日期
         let d = new Date();
         let totalDays = Math.ceil(remain / 5) * 7; 
         d.setDate(d.getDate() + totalDays);
@@ -48,6 +52,7 @@
     }
 
     function updateView() {
+        // 更新庫存列表
         const list = document.getElementById('inventory-list');
         list.innerHTML = '';
         inventory.forEach((item, index) => {
