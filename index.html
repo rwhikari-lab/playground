@@ -287,12 +287,12 @@
             mainRender();
         }
 
-        function renderInventory() {
+       function renderInventory() {
             const container = document.getElementById('inventory-list');
             container.innerHTML = '';
 
             if(inventory.length === 0) {
-                container.innerHTML = '<p style="text-align:center;color:#999;grid-column:1/-1;">目前冰箱還沒有登記副食品庫存喔！有購買副食品時，在上方專區填寫即可自動加入此處。</p>';
+                container.innerHTML = '<p style="text-align:center;color:#999;grid-column:1/-1;">目前冰箱還沒有登記副食品庫存喔！</p>';
                 return;
             }
 
@@ -301,7 +301,6 @@
 
             inventory.forEach((item, index) => {
                 let currentQty = item.qty + item.manualOffset;
-
                 if (item.storage === '冷凍') {
                     const start = new Date(item.startDate);
                     start.setHours(0,0,0,0);
@@ -315,38 +314,17 @@
                 const card = document.createElement('div');
                 card.className = `inv-item-card ${isLow ? 'low-stock' : ''}`;
                 
-                let badgeHtml = '';
-                if(currentQty === 0) {
-                    badgeHtml = `<span class="inv-badge" style="background:var(--danger)">已斷糧 ⚠️</span>`;
-                } else if(isLow) {
-                    badgeHtml = `<span class="inv-badge" style="background:var(--warning); color:#2f3542;">快補貨 ⚡</span>`;
-                } else {
-                    badgeHtml = `<span class="inv-badge" style="background:${item.storage === '冷凍' ? 'var(--blue)' : 'var(--primary)'}">${item.storage}充裕</span>`;
-                }
-
                 card.innerHTML = `
                     <h4>${item.storage === '冷凍' ? '❄️' : '👜'} ${item.name}</h4>
-                    ${badgeHtml}
+                    <span class="inv-badge" style="background:${currentQty <= 2 ? 'var(--danger)' : 'var(--primary)'}">${currentQty} 盒</span>
                     <p style="font-size:13px; margin: 5px 0; color:#57606f;">
-                        進貨日期：${item.startDate}<br>
-                        進貨總數：${item.qty} 盒/包<br>
-                        <strong>最晚補貨：<span style="color:var(--danger)">${item.deadline}</span></strong>
+                        已自動消耗：${item.storage === '冷凍' ? Math.floor(Math.max(0, today - new Date(item.startDate)) / (1000 * 60 * 60 * 24)) : 0} 天
                     </p>
-                    <div style="margin-top:10px; display:flex; align-items:center; justify-content:space-between;">
-                        <div>
-                            <span style="font-size:15px; font-weight:bold; color:#2f3542;">目前剩餘：${currentQty} 盒</span>
-                        </div>
-                        <div>
-                            <button class="inv-btn" style="background:#dfe4ea; color:#2f3542;" onclick="changeQty(${index}, -1)">-1</button>
-                            <button class="inv-btn" style="background:var(--baby);" onclick="changeQty(${index}, 1)">+1</button>
-                            <button class="inv-btn" style="background:var(--danger);" onclick="deleteInventory(${index})">刪</button>
-                        </div>
+                    <div style="display:flex; justify-content:center; gap:20px; margin-top:10px;">
+                        <button style="padding:10px 20px; font-size:18px; border-radius:8px; border:none; background:#eee;" onclick="changeQty(${index}, -1)">- 1</button>
+                        <button style="padding:10px 20px; font-size:18px; border-radius:8px; border:none; background:var(--baby); color:white;" onclick="changeQty(${index}, 1)">+ 1</button>
                     </div>
-                    <div class="correct-box">
-                        <span style="font-size:12px; color:#57606f;">📢 實際對庫存剩：</span>
-                        <input type="number" id="correct-input-${index}" value="${currentQty}" min="0">
-                        <button style="background:var(--blue);" onclick="forceCorrectQty(${index})">修改</button>
-                    </div>
+                    <button class="del-btn" style="width:100%; margin-top:10px;" onclick="deleteInventory(${index})">移除品項</button>
                 `;
                 container.appendChild(card);
             });
