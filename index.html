@@ -91,17 +91,17 @@
         <div id="form-veg" class="input-form">
             <div><label>日期</label><input type="date" id="v-date"></div>
             <div><label>食材項目</label><input type="text" id="v-item" placeholder="如：高麗菜、雞蛋"></div>
-            <div><label>單價</label><input type="number" id="v-price" placeholder="金額"></div>
+            <div><label>單價</label><input type="text" id="v-price" placeholder="數字即可"></div>
             <div><label>數量 / 份數</label><input type="number" id="v-qty" value="1" min="1"></div>
             <div><button onclick="addExpense('veg')">新增食材支出</button></div>
         </div>
 
         <div id="form-baby" class="input-form baby-theme" style="display: none;">
             <div><label>進貨日期</label><input type="date" id="b-date"></div>
-            <div><label>廠商名稱</label><input type="text" id="b-brand" placeholder="如：瀚克寶寶、大地之愛"></div>
-            <div><label>品項 / 口味</label><input type="text" id="b-item" placeholder="如：鮭魚粥、牛肉泥"></div>
+            <div><label>廠商名稱</label><input type="text" id="b-brand" placeholder="瀚克寶寶"></div>
+            <div><label>品項 / 口味</label><input type="text" id="b-item" placeholder="鮭魚粥"></div>
             <div><label>進貨數量 (盒/包)</label><input type="number" id="b-qty" value="14" min="1"></div>
-            <div><label>單價</label><input type="number" id="b-price" placeholder="金額"></div>
+            <div><label>單價</label><input type="text" id="b-price" placeholder="數字即可"></div>
             <div>
                 <label>保存與消耗類型</label>
                 <div class="radio-group">
@@ -190,15 +190,22 @@
             return Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
         }
 
+        // 自動過濾所有中文、特殊字元、錢字號的清洗功能
+        function cleanPriceInput(val) {
+            let cleanVal = val.replace(/[^\d.]/g, ''); // 僅留下數字與小數點
+            return Number(cleanVal) || 0;
+        }
+
         function addExpense(type) {
             let data = {};
             if (type === 'veg') {
                 const date = document.getElementById('v-date').value;
                 const item = document.getElementById('v-item').value;
-                const price = Number(document.getElementById('v-price').value);
+                const rawPrice = document.getElementById('v-price').value;
+                const price = cleanPriceInput(rawPrice);
                 const qty = Number(document.getElementById('v-qty').value);
 
-                if (!date || !item || !price) return alert('請填寫完整食材資訊！');
+                if (!date || !item || price <= 0) return alert('請填寫完整正確的食材資訊與金額！');
                 data = { date, type: '食材', name: item, price, qty, total: price * qty };
                 
                 document.getElementById('v-item').value = '';
@@ -208,18 +215,19 @@
                 expenses.push(data);
             } else {
                 const date = document.getElementById('b-date').value;
-                const brand = document.getElementById('b-brand').value;
-                const item = document.getElementById('b-item').value;
+                const brand = document.getElementById('b-brand').value || '未知品牌';
+                const item = document.getElementById('b-item').value || '未命名品項';
                 const qty = Number(document.getElementById('b-qty').value);
-                const price = Number(document.getElementById('b-price').value);
+                const rawPrice = document.getElementById('b-price').value;
+                const price = cleanPriceInput(rawPrice);
                 const storage = document.querySelector('input[name="b-storage"]:checked').value;
 
-                if (!date || !brand || !item || !price || qty <= 0) return alert('請填寫完整寶寶副食品資訊！');
+                if (!date || price <= 0 || qty <= 0) return alert('請確認有填寫進貨日期與正確的單價喔！');
                 
                 const fullName = `[${brand}] ${item}`;
                 data = { date, type: '寶寶副食品', name: fullName, price, qty, total: price * qty };
 
-                // 根據進貨數量自動推算最晚補貨日（一天吃一包）
+                // 全自動依盒數推算最晚補貨日（一天吃一盒）
                 const calcDeadline = new Date(date);
                 calcDeadline.setDate(calcDeadline.getDate() + qty);
                 const deadlineStr = calcDeadline.toISOString().split('T')[0];
@@ -344,7 +352,6 @@
             });
         }
 
-        // 📅 繪製主婦進出貨功能月曆
         function renderCalendar() {
             const body = document.getElementById('calendar-body');
             body.innerHTML = '';
@@ -354,7 +361,6 @@
 
             document.getElementById('calendar-title').innerText = `${year} 年 ${String(month + 1).padStart(2, '0')} 月`;
 
-            // 星期稱號列
             const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
             weekDays.forEach(d => {
                 const el = document.createElement('div');
@@ -366,7 +372,6 @@
             const firstDayIndex = new Date(year, month, 1).getDay();
             const totalDays = new Date(year, month + 1, 0).getDate();
 
-            // 塞入空白格子
             for (let i = 0; i < firstDayIndex; i++) {
                 const blank = document.createElement('div');
                 blank.className = 'calendar-cell';
@@ -376,7 +381,6 @@
 
             const todayStr = new Date().toISOString().split('T')[0];
 
-            // 塞入日期格子
             for (let day = 1; day <= totalDays; day++) {
                 const cell = document.createElement('div');
                 cell.className = 'calendar-cell';
@@ -386,20 +390,17 @@
 
                 cell.innerHTML = `<div class="day-num">${day}</div>`;
 
-                // 檢查這一天有沒有進貨事件或補貨事件
                 inventory.forEach(item => {
                     if(item.startDate === dateStr) {
                         const ev = document.createElement('div');
                         ev.className = 'calendar-event event-in';
                         ev.innerText = `🟢 進貨:${item.name.split('] ')[1] || item.name}`;
-                        ev.title = `進貨項目: ${item.name} (${item.qty}盒)`;
                         cell.appendChild(ev);
                     }
                     if(item.deadline === dateStr) {
                         const ev = document.createElement('div');
                         ev.className = 'calendar-event event-out';
                         ev.innerText = `🚨 補貨:${item.name.split('] ')[1] || item.name}`;
-                        ev.title = `警告：${item.name} 預計今天吃完，該補貨囉！`;
                         cell.appendChild(ev);
                     }
                 });
