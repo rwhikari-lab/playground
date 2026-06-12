@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ 家用支出電子白板 ⚡</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 500px; margin: 20px auto; padding: 10px; }
+        h1 { text-align: center; color: #333; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        input, button { padding: 10px; font-size: 16px; }
+        input[type="text"] { flex: 2; }
+        input[type="number"] { flex: 1; }
+        button { background: #2ea44f; color: white; border: none; cursor: pointer; border-radius: 6px; }
+        ul { list-style: none; padding: 0; }
+        li { padding: 10px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; }
+    </style>
+</head>
+<body>
+
+    <h1>📝 家用支出白板</h1>
+    
+    <div class="input-group">
+        <input type="text" id="item" placeholder="項目（如：牛奶）">
+        <input type="number" id="amount" placeholder="金額">
+        <button onclick="addExpense()">新增</button>
+    </div>
+
+    <ul id="expense-list">
+        </ul>
+
+    <script>
+        // 簡易的記帳邏輯（先暫存，進階可以用 LocalStorage 讓它重整不消失）
+        function addExpense() {
+            const itemInput = document.getElementById('item');
+            const amountInput = document.getElementById('amount');
+            const list = document.getElementById('expense-list');
+
+            if (itemInput.value === '' || amountInput.value === '') return;
+
+            const li = document.createElement('li');
+            li.innerHTML = `<span>${itemInput.value}</span> <strong>$${amountInput.value}</strong>`;
+            list.appendChild(li);
+
+            itemInput.value = '';
+            amountInput.value = '';
+        }
+    </script>
+</body>
+</html>
