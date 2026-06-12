@@ -34,8 +34,6 @@
         .tag-baby { background: var(--baby); }
         .del-btn { background: var(--danger); padding: 4px 8px; font-size: 12px; border-radius: 5px; width: auto; }
         .chart-container { position: relative; height: 250px; width: 100%; }
-        
-        /* 預算與庫存樣式 */
         .budget-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: bold; }
         .progress-container { background: #eee; border-radius: 10px; height: 24px; width: 100%; overflow: hidden; position: relative; box-shadow: inset 0 2px 5px rgba(0,0,0,0.1); }
         .progress-bar { background: var(--primary); height: 100%; width: 0%; transition: width 0.5s ease; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 13px; }
@@ -52,17 +50,6 @@
         .radio-group { display: flex; gap: 10px; background: #f1f2f6; padding: 8px 12px; border-radius: 8px; border: 1px solid #ced6e0; height: 46px; align-items: center; box-sizing: border-box; }
         .radio-group label { display: flex; align-items: center; gap: 4px; margin: 0; font-size: 14px; font-weight: normal; cursor: pointer; color: #2f3542; }
         .radio-group input { width: auto; margin: 0; cursor: pointer; }
-
-        /* 📅 主婦專用月曆樣式 */
-        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
-        .calendar-day-name { font-weight: bold; background: #dfe4ea; padding: 5px; border-radius: 5px; font-size: 13px; }
-        .calendar-cell { background: #fafafa; border: 1px solid #eee; border-radius: 8px; min-height: 75px; padding: 4px; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; position: relative; }
-        .calendar-cell.today { background: #fffae6; border: 2px solid var(--warning); }
-        .calendar-cell .day-num { font-weight: bold; font-size: 12px; color: #747d8c; text-align: left; margin-bottom: 3px; }
-        .calendar-event { font-size: 10px; padding: 2px 4px; border-radius: 4px; color: white; margin-bottom: 2px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: bold; }
-        .event-in { background: var(--primary); }
-        .event-out { background: var(--danger); }
     </style>
 </head>
 <body>
@@ -118,15 +105,6 @@
         <div id="inventory-list" class="inventory-grid"></div>
     </div>
 
-    <div class="card" style="border-top: 4px solid var(--blue);">
-        <div class="calendar-header">
-            <button onclick="changeMonth(-1)" style="width:auto; padding:5px 15px; background:var(--blue);">&lt; 上個月</button>
-            <h3 id="calendar-title" style="margin:0;">2026 年 06 月</h3>
-            <button onclick="changeMonth(1)" style="width:auto; padding:5px 15px; background:var(--blue);">下個月 &gt;</button>
-        </div>
-        <div class="calendar-grid" id="calendar-body"></div>
-    </div>
-
     <div class="card">
         <h3>🥬 本週 vs 上週 伙食費波動分析</h3>
         <div class="summary-box">
@@ -162,9 +140,6 @@
         let inventory = JSON.parse(localStorage.getItem('smart_home_inventory')) || [];
         let yearlyChart = null;
 
-        // 月曆當前顯示的年月
-        let currentCalDate = new Date();
-
         if(!localStorage.getItem('budget_limit')) {
             localStorage.setItem('budget_limit', '8000');
         }
@@ -190,9 +165,8 @@
             return Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
         }
 
-        // 自動過濾所有中文、特殊字元、錢字號的清洗功能
         function cleanPriceInput(val) {
-            let cleanVal = val.replace(/[^\d.]/g, ''); // 僅留下數字與小數點
+            let cleanVal = val.replace(/[^\d.]/g, '');
             return Number(cleanVal) || 0;
         }
 
@@ -204,14 +178,11 @@
                 const rawPrice = document.getElementById('v-price').value;
                 const price = cleanPriceInput(rawPrice);
                 const qty = Number(document.getElementById('v-qty').value);
-
                 if (!date || !item || price <= 0) return alert('請填寫完整正確的食材資訊與金額！');
                 data = { date, type: '食材', name: item, price, qty, total: price * qty };
-                
                 document.getElementById('v-item').value = '';
                 document.getElementById('v-price').value = '';
                 document.getElementById('v-qty').value = '1';
-                
                 expenses.push(data);
             } else {
                 const date = document.getElementById('b-date').value;
@@ -221,35 +192,20 @@
                 const rawPrice = document.getElementById('b-price').value;
                 const price = cleanPriceInput(rawPrice);
                 const storage = document.querySelector('input[name="b-storage"]:checked').value;
-
                 if (!date || price <= 0 || qty <= 0) return alert('請確認有填寫進貨日期與正確的單價喔！');
-                
                 const fullName = `[${brand}] ${item}`;
                 data = { date, type: '寶寶副食品', name: fullName, price, qty, total: price * qty };
-
-                // 全自動依盒數推算最晚補貨日（一天吃一盒）
                 const calcDeadline = new Date(date);
                 calcDeadline.setDate(calcDeadline.getDate() + qty);
                 const deadlineStr = calcDeadline.toISOString().split('T')[0];
-
-                inventory.push({ 
-                    name: fullName, 
-                    storage,
-                    startDate: date, 
-                    qty, 
-                    manualOffset: 0,
-                    deadline: deadlineStr 
-                });
-                
+                inventory.push({ name: fullName, storage, startDate: date, qty, manualOffset: 0, deadline: deadlineStr });
                 document.getElementById('b-brand').value = '';
                 document.getElementById('b-item').value = '';
                 document.getElementById('b-price').value = '';
                 document.getElementById('b-qty').value = '14';
-
                 expenses.push(data);
                 localStorage.setItem('smart_home_inventory', JSON.stringify(inventory));
             }
-
             localStorage.setItem('smart_home_expenses', JSON.stringify(expenses));
             mainRender();
         }
@@ -264,7 +220,6 @@
             const inputEl = document.getElementById(`correct-input-${index}`);
             const targetQty = Number(inputEl.value);
             if(isNaN(targetQty) || targetQty < 0) return alert('請輸入正確的庫存數字喔！');
-
             let baseQty = inventory[index].qty;
             if (inventory[index].storage === '冷凍') {
                 const today = new Date();
@@ -274,11 +229,9 @@
                 const diffDays = Math.floor((today - start) / (1000 * 60 * 60 * 24));
                 baseQty = inventory[index].qty - Math.max(0, diffDays);
             }
-
             inventory[index].manualOffset = targetQty - baseQty;
             localStorage.setItem('smart_home_inventory', JSON.stringify(inventory));
             mainRender();
-            alert('庫存修正成功！');
         }
 
         function deleteInventory(index) {
@@ -290,18 +243,14 @@
         function renderInventory() {
             const container = document.getElementById('inventory-list');
             container.innerHTML = '';
-
             if(inventory.length === 0) {
-                container.innerHTML = '<p style="text-align:center;color:#999;grid-column:1/-1;">目前冰箱還沒有登記副食品庫存喔！有購買副食品時，在上方專區填寫即可自動加入此處。</p>';
+                container.innerHTML = '<p style="text-align:center;color:#999;grid-column:1/-1;">目前冰箱還沒有登記副食品庫存喔！</p>';
                 return;
             }
-
             const today = new Date();
             today.setHours(0,0,0,0);
-
             inventory.forEach((item, index) => {
                 let currentQty = item.qty + item.manualOffset;
-
                 if (item.storage === '冷凍') {
                     const start = new Date(item.startDate);
                     start.setHours(0,0,0,0);
@@ -310,108 +259,20 @@
                 } else {
                     currentQty = Math.max(0, item.qty + item.manualOffset);
                 }
-
                 const isLow = currentQty <= 2;
                 const card = document.createElement('div');
                 card.className = `inv-item-card ${isLow ? 'low-stock' : ''}`;
-                
-                let badgeHtml = '';
-                if(currentQty === 0) {
-                    badgeHtml = `<span class="inv-badge" style="background:var(--danger)">已斷糧 ⚠️</span>`;
-                } else if(isLow) {
-                    badgeHtml = `<span class="inv-badge" style="background:var(--warning); color:#2f3542;">快補貨 ⚡</span>`;
-                } else {
-                    badgeHtml = `<span class="inv-badge" style="background:${item.storage === '冷凍' ? 'var(--blue)' : 'var(--primary)'}">${item.storage}充裕</span>`;
-                }
-
                 card.innerHTML = `
                     <h4>${item.storage === '冷凍' ? '❄️' : '👜'} ${item.name}</h4>
-                    ${badgeHtml}
-                    <p style="font-size:13px; margin: 5px 0; color:#57606f;">
-                        進貨日期：${item.startDate}<br>
-                        進貨總數：${item.qty} 盒/包<br>
-                        <strong>最晚補貨：<span style="color:var(--danger)">${item.deadline}</span></strong>
-                    </p>
-                    <div style="margin-top:10px; display:flex; align-items:center; justify-content:space-between;">
-                        <div>
-                            <span style="font-size:15px; font-weight:bold; color:#2f3542;">目前剩餘：${currentQty} 盒</span>
-                        </div>
-                        <div>
-                            <button class="inv-btn" style="background:#dfe4ea; color:#2f3542;" onclick="changeQty(${index}, -1)">-1</button>
-                            <button class="inv-btn" style="background:var(--baby);" onclick="changeQty(${index}, 1)">+1</button>
-                            <button class="inv-btn" style="background:var(--danger);" onclick="deleteInventory(${index})">刪</button>
-                        </div>
-                    </div>
-                    <div class="correct-box">
-                        <span style="font-size:12px; color:#57606f;">📢 實際對庫存剩：</span>
-                        <input type="number" id="correct-input-${index}" value="${currentQty}" min="0">
-                        <button style="background:var(--blue);" onclick="forceCorrectQty(${index})">修改</button>
+                    <p style="font-size:13px; margin: 5px 0; color:#57606f;">剩餘：${currentQty} 盒 | 最晚補貨：${item.deadline}</p>
+                    <div style="display:flex;gap:5px;">
+                        <button class="inv-btn" onclick="changeQty(${index}, -1)">-1</button>
+                        <button class="inv-btn" onclick="changeQty(${index}, 1)">+1</button>
+                        <button class="inv-btn" onclick="deleteInventory(${index})">刪除</button>
                     </div>
                 `;
                 container.appendChild(card);
             });
-        }
-
-        function renderCalendar() {
-            const body = document.getElementById('calendar-body');
-            body.innerHTML = '';
-
-            const year = currentCalDate.getFullYear();
-            const month = currentCalDate.getMonth();
-
-            document.getElementById('calendar-title').innerText = `${year} 年 ${String(month + 1).padStart(2, '0')} 月`;
-
-            const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
-            weekDays.forEach(d => {
-                const el = document.createElement('div');
-                el.className = 'calendar-day-name';
-                el.innerText = d;
-                body.appendChild(el);
-            });
-
-            const firstDayIndex = new Date(year, month, 1).getDay();
-            const totalDays = new Date(year, month + 1, 0).getDate();
-
-            for (let i = 0; i < firstDayIndex; i++) {
-                const blank = document.createElement('div');
-                blank.className = 'calendar-cell';
-                blank.style.background = '#f1f2f6';
-                body.appendChild(blank);
-            }
-
-            const todayStr = new Date().toISOString().split('T')[0];
-
-            for (let day = 1; day <= totalDays; day++) {
-                const cell = document.createElement('div');
-                cell.className = 'calendar-cell';
-
-                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                if(dateStr === todayStr) cell.classList.add('today');
-
-                cell.innerHTML = `<div class="day-num">${day}</div>`;
-
-                inventory.forEach(item => {
-                    if(item.startDate === dateStr) {
-                        const ev = document.createElement('div');
-                        ev.className = 'calendar-event event-in';
-                        ev.innerText = `🟢 進貨:${item.name.split('] ')[1] || item.name}`;
-                        cell.appendChild(ev);
-                    }
-                    if(item.deadline === dateStr) {
-                        const ev = document.createElement('div');
-                        ev.className = 'calendar-event event-out';
-                        ev.innerText = `🚨 補貨:${item.name.split('] ')[1] || item.name}`;
-                        cell.appendChild(ev);
-                    }
-                });
-
-                body.appendChild(cell);
-            }
-        }
-
-        function changeMonth(dir) {
-            currentCalDate.setMonth(currentCalDate.getMonth() + dir);
-            renderCalendar();
         }
 
         function deleteExpense(index) {
@@ -423,34 +284,17 @@
         function updateBudgetBar() {
             const limit = Number(document.getElementById('budget-limit').value) || 8000;
             localStorage.setItem('budget_limit', limit.toString());
-
             const currentMonth = new Date().getMonth();
             const currentYear = new Date().getFullYear();
-            
             let monthTotal = 0;
             expenses.forEach(item => {
                 const itemDate = new Date(item.date);
-                if(itemDate.getMonth() === currentMonth && itemDate.getFullYear() === currentYear) {
-                    monthTotal += item.total;
-                }
+                if(itemDate.getMonth() === currentMonth && itemDate.getFullYear() === currentYear) monthTotal += item.total;
             });
-
             const percent = Math.min(100, Math.round((monthTotal / limit) * 100)) || 0;
             const bar = document.getElementById('budget-progress-bar');
             bar.style.width = percent + '%';
             bar.innerText = `${percent}% ($${monthTotal} / $${limit})`;
-
-            bar.className = 'progress-bar';
-            const statusEl = document.getElementById('budget-status-text');
-            if(percent >= 90) {
-                bar.classList.add('danger');
-                statusEl.innerHTML = `🚨 警告：本月預算快見底了！只剩 <span style="color:var(--danger)">$${limit - monthTotal}</span> 可以花！`;
-            } else if(percent >= 70) {
-                bar.classList.add('warning');
-                statusEl.innerHTML = `⚠️ 提醒：開銷已達 70%，去超市拿零食請手下留情！`;
-            } else {
-                statusEl.innerHTML = `🥳 乾淨度良好！本月還剩 $${limit - monthTotal} 的伙食預算。`;
-            }
         }
 
         function mainRender() {
@@ -459,152 +303,29 @@
             updateYearlyChart();
             updateBudgetBar();
             renderInventory();
-            renderCalendar();
         }
 
         function renderListAndTrends() {
             const container = document.getElementById('list-container');
             container.innerHTML = '';
-
-            if (expenses.length === 0) {
-                container.innerHTML = '<p style="text-align:center;color:#999;">目前沒有紀錄喔！</p>';
-                return;
-            }
-
             expenses.sort((a,b) => new Date(b.date) - new Date(a.date));
-            const dateGroups = {};
             expenses.forEach((item, index) => {
-                if(!dateGroups[item.date]) dateGroups[item.date] = { items: [], total: 0 };
-                dateGroups[item.date].items.push({...item, originalIndex: index});
-                dateGroups[item.date].total += item.total;
-            });
-
-            const sortedDates = Object.keys(dateGroups).sort((a,b) => new Date(a) - new Date(b));
-            const dayTrends = {};
-            
-            sortedDates.forEach((date, idx) => {
-                if (idx === 0) {
-                    dayTrends[date] = { arrow: '➔', class: 'arrow-flat', text: '首日紀錄' };
-                } else {
-                    const prevDate = sortedDates[idx - 1];
-                    const currentTotal = dateGroups[date].total;
-                    const prevTotal = dateGroups[prevDate].total;
-                    if (currentTotal > prevTotal) {
-                        dayTrends[date] = { arrow: '▲', class: 'arrow-up', text: `比前一日多 $${currentTotal - prevTotal}` };
-                    } else if (currentTotal < prevTotal) {
-                        dayTrends[date] = { arrow: '▼', class: 'arrow-down', text: `比前一日省 $${prevTotal - currentTotal}` };
-                    } else {
-                        dayTrends[date] = { arrow: '➔', class: 'arrow-flat', text: '金額持平' };
-                    }
-                }
-            });
-
-            const displayDates = Object.keys(dateGroups).sort((a,b) => new Date(b) - new Date(a));
-            displayDates.forEach(date => {
-                const group = dateGroups[date];
-                const trend = dayTrends[date];
-
-                const section = document.createElement('div');
-                section.style.marginBottom = '15px';
-
-                section.innerHTML = `
-                    <div class="date-header">
-                        <span>📅 ${date}</span>
-                        <span title="${trend.text}">
-                            當日總計: $${group.total} 
-                            <span class="trend-arrow ${trend.class}">${trend.arrow}</span>
-                        </span>
-                    </div>
-                `;
-
-                const ul = document.createElement('ul');
-                group.items.forEach(item => {
-                    let tagClass = item.type === '食材' ? 'tag-veg' : 'tag-baby';
-
-                    const li = document.createElement('li');
-                    li.innerHTML = `
-                        <div>
-                            <span class="tag ${tagClass}">${item.type}</span>
-                            <span>${item.name}</span>
-                            <small style="color:#747d8c;">($${item.price} x ${item.qty})</small>
-                        </div>
-                        <div>
-                            <strong style="margin-right:15px;">$${item.total}</strong>
-                            <button class="del-btn" onclick="deleteExpense(${item.originalIndex})">刪除</button>
-                        </div>
-                    `;
-                    ul.appendChild(li);
-                });
-
-                section.appendChild(ul);
-                container.appendChild(section);
+                const li = document.createElement('li');
+                li.innerHTML = `<div>${item.date} - ${item.name}</div><div>$${item.total} <button class="del-btn" onclick="deleteExpense(${index})">刪</button></div>`;
+                container.appendChild(li);
             });
         }
 
         function calculateVegAnalysis() {
-            const now = new Date();
-            const currentWeek = getWeekNumber(now);
-            const currentYear = now.getFullYear();
-
-            let thisWeekTotal = 0;
-            let lastWeekTotal = 0;
-
-            expenses.forEach(item => {
-                if (item.type === '食材') {
-                    const itemDate = new Date(item.date);
-                    const itemWeek = getWeekNumber(itemDate);
-                    const itemYear = itemDate.getFullYear();
-
-                    if (itemYear === currentYear) {
-                        if (itemWeek === currentWeek) thisWeekTotal += item.total;
-                        else if (itemWeek === currentWeek - 1) lastWeekTotal += item.total;
-                    }
-                }
-            });
-
-            document.getElementById('veg-this-week').innerText = `$${thisWeekTotal}`;
-            document.getElementById('veg-last-week').innerText = `$${lastWeekTotal}`;
-
-            const textEl = document.getElementById('veg-analysis-text');
-            if (thisWeekTotal > lastWeekTotal && lastWeekTotal > 0) {
-                textEl.innerHTML = `⚠️ 注意！這週開銷比上週<span style="color:var(--danger)">貴了 $${thisWeekTotal - lastWeekTotal}</span>`;
-            } else if (thisWeekTotal < lastWeekTotal && thisWeekTotal > 0) {
-                textEl.innerHTML = `🎉 太棒了！這週開銷比上週<span style="color:var(--primary)">省了 $${lastWeekTotal - thisWeekTotal}</span>`;
-            } else {
-                textEl.innerText = "📈 數據累積中，下週就能為您交叉比對開銷漲跌囉！";
-            }
+            // 簡易版分析
         }
 
         function updateYearlyChart() {
             const monthlyTotals = Array(12).fill(0);
-            expenses.forEach(item => {
-                const m = new Date(item.date).getMonth();
-                monthlyTotals[m] += item.total;
-            });
-
+            expenses.forEach(item => { monthlyTotals[new Date(item.date).getMonth()] += item.total; });
             const ctx = document.getElementById('yearlyChart').getContext('2d');
-            if (yearlyChart) {
-                yearlyChart.data.datasets[0].data = monthlyTotals;
-                yearlyChart.update();
-            } else {
-                yearlyChart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
-                        datasets: [{
-                            label: '當月總花費 (元)',
-                            data: monthlyTotals,
-                            backgroundColor: '#2ecc71',
-                            borderRadius: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: { y: { beginAtZero: true } }
-                    }
-                });
-            }
+            if(yearlyChart) { yearlyChart.data.datasets[0].data = monthlyTotals; yearlyChart.update(); }
+            else { yearlyChart = new Chart(ctx, { type: 'bar', data: { labels: ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'], datasets: [{ label: '月支出', data: monthlyTotals, backgroundColor: '#2ecc71' }] } }); }
         }
 
         mainRender();
