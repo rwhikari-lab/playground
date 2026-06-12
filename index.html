@@ -161,8 +161,6 @@
         let expenses = JSON.parse(localStorage.getItem('smart_home_expenses')) || [];
         let inventory = JSON.parse(localStorage.getItem('smart_home_inventory')) || [];
         let yearlyChart = null;
-
-        // 月曆當前顯示的年月
         let currentCalDate = new Date();
 
         if(!localStorage.getItem('budget_limit')) {
@@ -190,9 +188,8 @@
             return Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
         }
 
-        // 自動過濾所有中文、特殊字元、錢字號的清洗功能
         function cleanPriceInput(val) {
-            let cleanVal = val.replace(/[^\d.]/g, ''); // 僅留下數字與小數點
+            let cleanVal = val.replace(/[^\d.]/g, ''); 
             return Number(cleanVal) || 0;
         }
 
@@ -211,7 +208,6 @@
                 document.getElementById('v-item').value = '';
                 document.getElementById('v-price').value = '';
                 document.getElementById('v-qty').value = '1';
-                
                 expenses.push(data);
             } else {
                 const date = document.getElementById('b-date').value;
@@ -227,7 +223,7 @@
                 const fullName = `[${brand}] ${item}`;
                 data = { date, type: '寶寶副食品', name: fullName, price, qty, total: price * qty };
 
-                // 全自動依盒數推算最晚補貨日（一天吃一盒）
+                // 初始推算補貨日
                 const calcDeadline = new Date(date);
                 calcDeadline.setDate(calcDeadline.getDate() + qty);
                 const deadlineStr = calcDeadline.toISOString().split('T')[0];
@@ -254,12 +250,15 @@
             mainRender();
         }
 
+        // 當使用者按 +1 或 -1 時，最晚補貨日同步跟著漂移
         function changeQty(index, amount) {
             inventory[index].manualOffset += amount;
+            recalculateItemDeadline(index);
             localStorage.setItem('smart_home_inventory', JSON.stringify(inventory));
             mainRender();
         }
 
+        // 当使用者一键強制修正實際數量時，最晚補貨日從今天起算同步跟著大幅漂移！
         function forceCorrectQty(index) {
             const inputEl = document.getElementById(`correct-input-${index}`);
             const targetQty = Number(inputEl.value);
@@ -276,9 +275,31 @@
             }
 
             inventory[index].manualOffset = targetQty - baseQty;
+            recalculateItemDeadline(index); // 🌟 核心：立刻重新精算月曆日期
+            
             localStorage.setItem('smart_home_inventory', JSON.stringify(inventory));
             mainRender();
-            alert('庫存修正成功！');
+            alert('庫存與月曆補貨日同步校正成功！');
+        }
+
+        // 🌟 自動根據當前實際剩餘量計算「新的補貨日期」的強大函數
+        function recalculateItemDeadline(index) {
+            const item = inventory[index];
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
+            let currentQty = item.qty + item.manualOffset;
+            if (item.storage === '冷凍') {
+                const start = new Date(item.startDate);
+                start.setHours(0,0,0,0);
+                const diffDays = Math.floor(Math.max(0, today - start) / (1000 * 60 * 60 * 24));
+                currentQty = Math.max(0, item.qty - diffDays + item.manualOffset);
+            }
+
+            // 補貨日漂移邏輯：從「今天」開始往後延加目前剩餘的盒數
+            const newDeadline = new Date(today);
+            newDeadline.setDate(newDeadline.getDate() + currentQty);
+            item.deadline = newDeadline.toISOString().split('T')[0];
         }
 
         function deleteInventory(index) {
